@@ -2,6 +2,7 @@ const HKEY_LOCAL_MACHINE = &H80000002
 key = "System\CurrentControlSet\Control\Session Manager\Environment"
 valueName = "PROCESSOR_ARCHITECTURE"
 expectedValue = Wscript.Arguments(0) 'x86 or x64
+n = 1000
 
 If expectedValue = "x64" Then
   expectedValue = "AMD64"
@@ -25,12 +26,12 @@ Set reg64_services = reg64_locator.ConnectServer(".", "root\default","","",,,,re
 Set reg64 = reg64_services.Get("StdRegProv") 
 
 Wscript.Echo "cscript path: " & Wscript.FullName
-Wscript.Echo "Reading " & key & "\" & valueName & " 1000 times" & vbcrlf
+Wscript.Echo "Reading " & key & "\" & valueName & " " & n & " times" & vbcrlf
 
 For j = 0 To 4
   Wscript.stdout.Write Rpad("Agnostic: ", " ", 30)
   StartTime = Timer()
-  For i = 0 To 1000
+  For i = 0 To n
     GetStringValueAgnostic strResult
     VerifyResult strResult
   Next
@@ -40,8 +41,8 @@ For j = 0 To 4
 
   Wscript.stdout.Write Rpad("32-bit: ", " ", 30)
   StartTime = Timer()
-  For i = 0 To 1000
-    GetStringValueSpecific reg32, null, reg32_ctx, strResult
+  For i = 0 To n
+    GetStringValueSpecific reg32, null, null, reg32_ctx, strResult
     VerifyResult strResult
   Next
   EndBenchmark StartTime, Timer(), firstDuration
@@ -52,16 +53,25 @@ For j = 0 To 4
   params.sSubKeyName = key
   params.sValueName = valueName
   StartTime = Timer()
-  For i = 0 To 1000
-    GetStringValueSpecific reg32, params, reg32_ctx, strResult
+  For i = 0 To n
+    GetStringValueSpecific reg32, null, params, reg32_ctx, strResult
+    VerifyResult strResult
+  Next
+  EndBenchmark StartTime, Timer(), firstDuration
+
+  Wscript.stdout.Write Rpad("32-bit (predefined method): ", " ", 30)
+  Set method = reg32.Methods_("GetStringValue")
+  StartTime = Timer()
+  For i = 0 To n
+    GetStringValueSpecific reg32, method, null, reg32_ctx, strResult
     VerifyResult strResult
   Next
   EndBenchmark StartTime, Timer(), firstDuration
 
   Wscript.stdout.Write Rpad("64-bit: ", " ", 30)
   StartTime = Timer()
-  For i = 0 To 1000
-    GetStringValueSpecific reg64, null, reg64_ctx, strResult
+  For i = 0 To n
+    GetStringValueSpecific reg64, null, null, reg64_ctx, strResult
     VerifyResult strResult
   Next
   EndBenchmark StartTime, Timer(), firstDuration
@@ -72,8 +82,17 @@ For j = 0 To 4
   params.sSubKeyName = key
   params.sValueName = valueName
   StartTime = Timer()
-  For i = 0 To 1000
-    GetStringValueSpecific reg64, params, reg64_ctx, strResult
+  For i = 0 To n
+    GetStringValueSpecific reg64, null, params, reg64_ctx, strResult
+    VerifyResult strResult
+  Next
+  EndBenchmark StartTime, Timer(), firstDuration
+
+  Wscript.stdout.Write Rpad("64-bit (predefined method): ", " ", 30)
+  Set method = reg64.Methods_("GetStringValue")
+  StartTime = Timer()
+  For i = 0 To n
+    GetStringValueSpecific reg64, method, null, reg64_ctx, strResult
     VerifyResult strResult
   Next
   EndBenchmark StartTime, Timer(), firstDuration
@@ -113,9 +132,13 @@ Sub GetStringValueAgnostic(strResult)
   agnostic.GetStringValue HKEY_LOCAL_MACHINE, key, valueName, strResult
 End Sub
 
-Sub GetStringValueSpecific(reg, params, ctx, strResult)  
+Sub GetStringValueSpecific(reg, method, params, ctx, strResult)  
+  If IsNull(method) Then
+    Set method = reg.Methods_("GetStringValue")
+  End If
+
   If IsNull(params) Then
-    Set params = reg.Methods_("GetStringValue").Inparameters
+    Set params = method.Inparameters
   
     params.hDefKey = HKEY_LOCAL_MACHINE
     params.sSubKeyName = key
