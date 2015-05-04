@@ -27,7 +27,7 @@ Set reg64 = reg64_services.Get("StdRegProv")
 Wscript.Echo "cscript path: " & Wscript.FullName
 Wscript.Echo "Reading " & key & "\" & valueName & " 500 times" & vbcrlf
 
-For j = 0 To 1
+For j = 0 To 4
   Wscript.stdout.Write Rpad("Agnostic: ", " ", 30)
   StartTime = Timer()
   For i = 0 To 500
@@ -86,7 +86,12 @@ Sub EndBenchmark(StartTime, EndTime, firstDuration)
   Wscript.stdout.Write FormatTime(duration)  & " sec "
 
   If Not IsNull(firstDuration) Then
-    Wscript.stdout.Write "  +" & FormatTime(duration - firstDuration)
+    diff = duration - firstDuration
+    If diff > 0 Then
+      Wscript.stdout.Write "  +" & FormatTime(diff)
+    Else
+      Wscript.stdout.Write "  -" & FormatTime(firstDuration - duration)
+    End If
   End If
 
   Wscript.stdout.Write vbcrlf
