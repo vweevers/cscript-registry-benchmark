@@ -25,12 +25,12 @@ Set reg64_services = reg64_locator.ConnectServer(".", "root\default","","",,,,re
 Set reg64 = reg64_services.Get("StdRegProv") 
 
 Wscript.Echo "cscript path: " & Wscript.FullName
-Wscript.Echo "Reading " & key & "\" & valueName & " 500 times" & vbcrlf
+Wscript.Echo "Reading " & key & "\" & valueName & " 1000 times" & vbcrlf
 
 For j = 0 To 4
   Wscript.stdout.Write Rpad("Agnostic: ", " ", 30)
   StartTime = Timer()
-  For i = 0 To 500
+  For i = 0 To 1000
     GetStringValueAgnostic strResult
     VerifyResult strResult
   Next
@@ -40,7 +40,7 @@ For j = 0 To 4
 
   Wscript.stdout.Write Rpad("32-bit: ", " ", 30)
   StartTime = Timer()
-  For i = 0 To 500
+  For i = 0 To 1000
     GetStringValueSpecific reg32, null, reg32_ctx, strResult
     VerifyResult strResult
   Next
@@ -52,7 +52,7 @@ For j = 0 To 4
   params.sSubKeyName = key
   params.sValueName = valueName
   StartTime = Timer()
-  For i = 0 To 500
+  For i = 0 To 1000
     GetStringValueSpecific reg32, params, reg32_ctx, strResult
     VerifyResult strResult
   Next
@@ -60,7 +60,7 @@ For j = 0 To 4
 
   Wscript.stdout.Write Rpad("64-bit: ", " ", 30)
   StartTime = Timer()
-  For i = 0 To 500
+  For i = 0 To 1000
     GetStringValueSpecific reg64, null, reg64_ctx, strResult
     VerifyResult strResult
   Next
@@ -72,7 +72,7 @@ For j = 0 To 4
   params.sSubKeyName = key
   params.sValueName = valueName
   StartTime = Timer()
-  For i = 0 To 500
+  For i = 0 To 1000
     GetStringValueSpecific reg64, params, reg64_ctx, strResult
     VerifyResult strResult
   Next
